@@ -23,7 +23,7 @@ def train_step(
         optimizer: Optimizer,
         accuracy_fn: typing.Callable[[torch.Tensor, torch.Tensor], float],
         device: torch.device
-) -> float:
+) -> list:
     """
     Performs one training step with model trying to learn on data_loader
     :param model: Model
@@ -32,7 +32,7 @@ def train_step(
     :param optimizer: Optimizer
     :param accuracy_fn: Accuracy measure
     :param device: Destination device
-    :return: Model accuracy
+    :return: Pair of (train_loss, train_accuracy)
     """
     train_loss, train_acc = 0, 0
     model.train()
@@ -54,7 +54,7 @@ def train_step(
     train_acc /= len(data_loader)
 
     print(f'Train loss = {train_loss} | Train accuracy = {train_acc:.2f}%')
-    return train_acc
+    return [train_loss.item(), train_acc]
 
 
 def test_step(
@@ -63,7 +63,7 @@ def test_step(
         loss_fn: nn.Module,
         accuracy_fn: typing.Callable[[torch.Tensor, torch.Tensor], float],
         device: torch.device
-) -> float:
+) -> list:
     """
     Perform test step on model going over dataloader
     :param model: Model to test
@@ -71,7 +71,7 @@ def test_step(
     :param loss_fn: Loss Function
     :param accuracy_fn: Accuracy function
     :param device: Device
-    :return: Test accuracy
+    :return: Pair of (test_loss, test_accuracy)
     """
     test_loss, test_acc = 0, 0
     model.eval()
@@ -80,13 +80,13 @@ def test_step(
         for X, y in data_loader:
             X, y = X.to(device), y.to(device)
             y_predictions = model(X)
-            test_loss += loss_fn(y_predictions.argmax(dim=1), y)
-            test_acc += accuracy_fn(y_predictions, y)
-    test_loss /= len(data_loader)
-    test_acc /= len(data_loader)
+            test_loss += loss_fn(y_predictions, y)
+            test_acc += accuracy_fn(y_predictions.argmax(dim=1), y)
+        test_loss /= len(data_loader)
+        test_acc /= len(data_loader)
 
-    print(f'Test loss = {test_loss} | Test accuracy = {test_acc:.2f}%')
-    return test_acc
+        print(f'Test loss = {test_loss} | Test accuracy = {test_acc:.2f}%')
+        return [test_loss.item(), test_acc]
 
 
 def eval_model(
