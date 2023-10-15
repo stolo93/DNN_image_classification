@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime
 import os
 from tqdm.auto import tqdm
-import timeit
+import time
 
 from Utils import train_step, test_step, accuracy_fn
 from TinyVGG import TinyVGGModel
@@ -92,6 +92,7 @@ def get_dataloaders(path: Path = Path('data')):
 
 
 def main():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     train_dataloader, test_dataloader, labels = get_dataloaders()
 
     # Create model, optimizer and loss function
@@ -99,7 +100,6 @@ def main():
     model_tvgg = TinyVGGModel(input_shape=3, hidden_units=10, output_shape=len(labels))
     optimizer = torch.optim.SGD(model_tvgg.parameters(), lr=0.01)
     loss_fn = torch.nn.CrossEntropyLoss()
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     total_epochs = 0
     train_stats = []
@@ -114,13 +114,17 @@ def main():
         test_stats = checkpoint['test_stats']
         total_epochs = checkpoint['epoch']
 
+    # Move everything to the desired device
+    model_tvgg = model_tvgg.to(device)
+    loss_fn = loss_fn.to(device)
+
     total_time = 0
     # Training
     while True:
         print(f'\nCurrent accuracy: Train {train_stats[-1][1]:.3f} || Test {test_stats[-1][1]:.3f}')
         epochs = int(input(f'Insert number of epochs\n(Total epochs {total_epochs}):\n'))
 
-        time_start = timeit.timeit()
+        time_start = time.time()
         for epoch in tqdm(range(1, epochs + 1)):
             print(f'Epoch: {epoch} / {epochs} || Total: {total_epochs}')
             train_loss_acc = train_step(
@@ -141,14 +145,14 @@ def main():
             train_stats.append(train_loss_acc)
             test_stats.append(test_loss_acc)
             total_epochs += 1
-        time_end = timeit.timeit()
 
+        time_end = time.time()
         total_time += (time_end - time_start)
 
         if input('Continue [y/n]') != 'y':
             break
 
-    print(f'Total training time: {total_time}')
+    print(f'Total training time: {total_time:.3f}')
 
     # Save checkpoint
     save_checkpoint(
