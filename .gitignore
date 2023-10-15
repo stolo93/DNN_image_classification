@@ -4,6 +4,7 @@
 
 # Virtual environment
 venv
+__pycache__
 
 # Datasets
 data
