@@ -99,7 +99,7 @@ def main():
     model_tvgg = TinyVGGModel(input_shape=3, hidden_units=10, output_shape=len(labels))
     optimizer = torch.optim.SGD(model_tvgg.parameters(), lr=0.01)
     loss_fn = torch.nn.CrossEntropyLoss()
-    device = 'gpu' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     total_epochs = 0
     train_stats = []
