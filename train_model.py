@@ -35,6 +35,7 @@ def load_checkpoint(path: Path = Path('checkpoints')):
 def save_checkpoint(
         path: Path,
         epochs: int,
+        time_spent: float,
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         train_stats: list,
@@ -42,6 +43,7 @@ def save_checkpoint(
 ):
     """
     Create and save checkpoint of the current training state
+    :param time_spent: Total time spent training the network
     :param path: checkpoint directory
     :param epochs: total num of epochs
     :param model: model in training
@@ -61,6 +63,7 @@ def save_checkpoint(
 
     torch.save({
         'epoch': epochs,
+        'time_spent': time_spent,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
         'train_stats': train_stats,
@@ -96,12 +99,13 @@ def main():
     train_dataloader, test_dataloader, labels = get_dataloaders()
 
     # Create model, optimizer and loss function
-    torch.manual_seed(42)
+    torch.manual_seed(115)
     model_tvgg = TinyVGGModel(input_shape=3, hidden_units=10, output_shape=len(labels))
     optimizer = torch.optim.SGD(model_tvgg.parameters(), lr=0.01)
     loss_fn = torch.nn.CrossEntropyLoss()
 
     total_epochs = 0
+    total_time = 0
     train_stats = []
     test_stats = []
 
@@ -113,12 +117,12 @@ def main():
         train_stats = checkpoint['train_stats']
         test_stats = checkpoint['test_stats']
         total_epochs = checkpoint['epoch']
+        total_time = checkpoint['time_spent']
 
     # Move everything to the desired device
     model_tvgg = model_tvgg.to(device)
     loss_fn = loss_fn.to(device)
 
-    total_time = 0
     # Training
     while True:
         print(f'\nCurrent accuracy: Train {train_stats[-1][1]:.3f} || Test {test_stats[-1][1]:.3f}')
@@ -155,14 +159,8 @@ def main():
     print(f'Total training time: {total_time:.3f}')
 
     # Save checkpoint
-    save_checkpoint(
-        path=Path('checkpoints'),
-        epochs=total_epochs,
-        model=model_tvgg,
-        optimizer=optimizer,
-        train_stats=train_stats,
-        test_stats=test_stats
-    )
+    save_checkpoint(path=Path('checkpoints'), epochs=total_epochs, time_spent=total_time, model=model_tvgg,
+                    optimizer=optimizer, train_stats=train_stats, test_stats=test_stats)
 
 
 if __name__ == '__main__':
