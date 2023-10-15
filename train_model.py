@@ -125,7 +125,8 @@ def main():
 
     # Training
     while True:
-        print(f'\nCurrent accuracy: Train {train_stats[-1][1]:.3f} || Test {test_stats[-1][1]:.3f}')
+        if train_stats and test_stats:
+            print(f'\nCurrent accuracy: Train {train_stats[-1][1]:.3f} || Test {test_stats[-1][1]:.3f}')
         epochs = int(input(f'Insert number of epochs\n(Total epochs {total_epochs}):\n'))
 
         time_start = time.time()
